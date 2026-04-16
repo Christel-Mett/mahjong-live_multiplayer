@@ -1,6 +1,7 @@
 # Mahjong-Live Multiplayer
 
 Online-Solitair-Mahjong Spiel (Node.js), Multiplayer.  
+**Live-Demo:** [mahjong-treff.de](https://mahjong-treff.de)
 **Hauptsprache:** Deutsch (English via auto-translation).
 
 ## Über dieses Projekt

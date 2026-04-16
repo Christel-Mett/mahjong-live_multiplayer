@@ -8,7 +8,7 @@ Online-Solitair-Mahjong Spiel (Node.js), Multiplayer.
 Dieses Projekt ist ein browserbasiertes Solitär-Mahjong-Spiel mit Einzel- und Mehrspielermodus. Es basiert technisch auf Node.js und nutzt Three.js für die Darstellung.
 
 ## Entwicklung & Methodik
-Dieses Projekt wurde unter Anwendung von **Vibecoding realisiert**.
+Dieses Projekt wurde unter Anwendung von **Vibecoding** realisiert.
 
 Wichtiger Hinweis zum Hintergrund:
 Ich verfüge über fundierte Grundkenntnisse im Scripting (Python, Bash, PHP), bin jedoch kein professioneller Full-Stack-Entwickler. Die Architektur und die komplexe Logik dieses Spiels – insbesondere die 3D-Visualisierung mit Three.js und die Echtzeit-Synchronisation – entstanden durch eine intensive, iterative Zusammenarbeit zwischen mir (als Architekt und Tester) und Künstlicher Intelligenz (als ausführende Instanz für den Code).

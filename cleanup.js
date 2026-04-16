@@ -3,7 +3,7 @@ const nodemailer = require('nodemailer');
 require('dotenv').config({ path: require('path').resolve(__dirname, '.env') });
 
 // EINSTELLUNGEN
-const SIMULATION_MODE = true; // Auf 'false' setzen, um scharf zu schalten
+const SIMULATION_MODE = false; // Auf 'false' setzen, um scharf zu schalten
 const INACTIVE_MONTHS = 6;
 const GRACE_PERIOD_DAYS = 7;
 

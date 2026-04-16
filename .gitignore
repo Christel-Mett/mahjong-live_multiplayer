@@ -1,0 +1,18 @@
+# Abhängigkeiten
+node_modules/
+
+# Sensible Daten
+.env
+
+# Statische / Generierte Verzeichnisse
+public/
+
+# Dokumente & Scripte aus dem Root (laut deinem Script)
+new_zip.sh
+impressum.html
+datenschutz.html
+nutzung.html
+news.html
+
+# Zip-Dateien
+*.zip

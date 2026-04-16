@@ -1,0 +1,30 @@
+# Mahjong Treff - Installation & Setup
+
+Dieses Paket enthält den Quellcode und die Datenbankstruktur für das Mahjong-Projekt.
+
+## Voraussetzungen
+- Node.js (LTS Version empfohlen)
+- MariaDB oder MySQL Server
+- Ein SMTP-Server für den Mailversand (z.B. Gmail, Outlook oder eigener Server)
+
+## Installation
+
+1. **Abhängigkeiten installieren:**
+   Führe im Hauptverzeichnis folgenden Befehl aus:
+   `npm install`
+
+2. **Datenbank vorbereiten:**
+   - Erstelle eine neue Datenbank in MariaDB.
+   - Importiere die Struktur aus der beiliegenden Datei:
+     `mariadb -u dein_user -p deine_datenbank < maria.sql`
+
+3. **Konfiguration:**
+   - Kopiere die Datei `.env.example` und benenne sie um in `.env`.
+   - Öffne die `.env` und trage deine persönlichen Zugangsdaten für die Datenbank, den Mail-Server und reCAPTCHA ein.
+
+4. **Starten:**
+   - Starte die App mit: `node server.js`
+   - Oder dauerhaft mit PM2: `pm2 start server.js --name mahjong-live`
+
+---
+Viel Erfolg beim Hosten!

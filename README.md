@@ -1,0 +1,30 @@
+Mahjong-Live Multiplayer
+Online-Solitair-Mahjong Spiel (Node.js), Multiplayer.
+
+Hauptsprache: Deutsch (English via auto-translation).
+
+Über dieses Projekt
+Dieses Projekt ist ein browserbasiertes Mahjong-Spiel mit Einzel- und Mehrspielermodus. Es basiert technisch auf Node.js und nutzt Three.js für die Darstellung.
+
+Rechtliches & Lizenzen
+Dieses Projekt ist Open Source und unter der GNU General Public License (GPL) v3 veröffentlicht.
+
+Grafiken: Die Steinsymbole und Layouts basieren auf dem "KMahjongg"-Projekt (KDE Games).
+
+Hintergrund: "Chinese Landscape" © Eugene Trounev (GPL).
+
+Engine: Nutzt Three.js (MIT Lizenz).
+
+Weitere Details findest du in der CREDITS.txt.
+
+Installation
+Eine detaillierte Anleitung zur Installation und Konfiguration (Datenbank, Node.js, Umgebungsvariablen) befindet sich in der Datei INSTALL.txt.
+
+Kurzübersicht:
+Abhängigkeiten installieren: npm install
+
+Datenbank aus maria.sql importieren.
+
+.env Datei basierend auf den eigenen Zugangsdaten erstellen.
+
+Server starten: node server.js

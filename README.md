@@ -8,11 +8,12 @@ Online-Solitair-Mahjong Spiel (Node.js), Multiplayer.
 Dieses Projekt ist ein browserbasiertes Solitär-Mahjong-Spiel mit Einzel- und Mehrspielermodus. Es basiert technisch auf Node.js und nutzt Three.js für die Darstellung.
 
 ## Entwicklung & Methodik
-Dieses Projekt wurde unter Anwendung von **Vibecoding** realisiert. 
+Dieses Projekt wurde unter Anwendung von **Vibecoding realisiert**.
 
-Wichtiger Hinweis zum Hintergrund: Ich bin kein professioneller Softwareentwickler oder Programmierer. Die Architektur und die Logik des Spiels entstanden durch eine intensive, iterative Zusammenarbeit zwischen mir (als Visionär und Tester) und Künstlicher Intelligenz (als ausführende Instanz für den Code). 
+Wichtiger Hinweis zum Hintergrund:
+Ich verfüge über fundierte Grundkenntnisse im Scripting (Python, Bash, PHP), bin jedoch kein professioneller Full-Stack-Entwickler. Die Architektur und die komplexe Logik dieses Spiels – insbesondere die 3D-Visualisierung mit Three.js und die Echtzeit-Synchronisation – entstanden durch eine intensive, iterative Zusammenarbeit zwischen mir (als Architekt und Tester) und Künstlicher Intelligenz (als ausführende Instanz für den Code).
 
-Dieser moderne Ansatz ermöglichte es mir, ohne tiefe eigene Programmierkenntnisse ein komplexes Mehrspieler-System und eine 3D-Visualisierung umzusetzen. Wer den Code analysiert, wird daher die Handschrift fortschrittlicher KI-Modelle finden, die nach meinen Vorgaben und durch mein Feedback gesteuert wurden.
+Dieser moderne Ansatz ermöglichte es mir, meine bestehenden Erfahrungen effizient zu nutzen und gleichzeitig technologische Hürden zu überspringen, für die normalerweise jahrelange spezialisierte Entwicklungserfahrung nötig wäre. Wer den Code analysiert, wird daher die Handschrift fortschrittlicher KI-Modelle finden, die nach meinen präzisen Vorgaben und durch mein kontinuierliches Feedback gesteuert wurden.
 
 ## Rechtliches & Lizenzen
 Dieses Projekt ist Open Source und unter der **GNU General Public License (GPL) v3** veröffentlicht.

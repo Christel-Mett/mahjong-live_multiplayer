@@ -4,7 +4,7 @@ Online-Solitair-Mahjong Spiel (Node.js), Multiplayer.
 **Hauptsprache:** Deutsch (English via auto-translation).
 
 ## Über dieses Projekt
-Dieses Projekt ist ein browserbasiertes Mahjong-Spiel mit Einzel- und Mehrspielermodus. Es basiert technisch auf Node.js und nutzt Three.js für die Darstellung.
+Dieses Projekt ist ein browserbasiertes Solitär-Mahjong-Spiel mit Einzel- und Mehrspielermodus. Es basiert technisch auf Node.js und nutzt Three.js für die Darstellung.
 
 ## Entwicklung & Methodik
 Dieses Projekt wurde unter Anwendung von **Vibecoding** realisiert. 

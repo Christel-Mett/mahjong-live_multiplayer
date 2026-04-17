@@ -245,25 +245,30 @@
 
 
 			socket.on('update_user_list', (users) => {
-            const list = document.getElementById('user-list');
-            list.innerHTML = '';
-            
-            users.forEach(userData => {
-                const div = document.createElement('div');
-                div.className = 'user-entry';
-                
-                // Anzeige: Name und Rang in Klammern
-                div.textContent = `${userData.username} (${userData.rang})`;
-
-                // Schritt 2 (beibehalten): Eigenen Namen grün einfärben
-                if (userData.username === meinName) {
-                    div.style.color = '#2ecc71';
-                    div.style.fontWeight = 'bold';
-                }
-
-                list.appendChild(div);
-            });
-        });
+			    const list = document.getElementById('user-list');
+			    list.innerHTML = '';
+			    
+			    users.forEach(userData => {
+			        const div = document.createElement('div');
+			        div.className = 'user-entry';
+			        
+			        // Standardanzeige
+			        div.textContent = `${userData.username} (${userData.rang})`;
+			
+			        // Logik für die Farbhierarchie:
+			        if (userData.ingame) {
+			            // Spieler ist im Spiel -> Rot
+			            div.style.color = '#e74c3c'; 
+			            div.textContent += " (im Spiel)";
+			        } else if (userData.username === meinName) {
+			            // Ich selbst (und nicht im Spiel) -> Grün
+			            div.style.color = '#2ecc71';
+			            div.style.fontWeight = 'bold';
+			        }
+			
+			        list.appendChild(div);
+			    });
+			});
 
         // Event wenn ein Match gefunden wurde
         socket.on('match_found', (data) => {

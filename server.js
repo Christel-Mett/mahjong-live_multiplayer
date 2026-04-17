@@ -228,6 +228,7 @@ function starteMatch(peer, snapper) {
     });
 
     console.log(`Match fixiert: ${peer.name} (R:${peer.rank}) vs ${snapper.name} (R:${snapper.rank})`);
+broadcastUserList();
 }
 
 // Intervall-Checker für die Warteschlange
@@ -343,7 +344,6 @@ function starteMatchSpeziell(peer, snapper, gewähltesLayout) {
 
 
 function broadcastUserList() {
-    // Extrahiert die Usernamen, egal ob sie als String oder Objekt in onlineUsers liegen
     const usernames = [...new Set(Object.values(onlineUsers).map(u => 
         (u && typeof u === 'object') ? u.username : u
     ))].filter(name => name !== undefined);
@@ -352,6 +352,12 @@ function broadcastUserList() {
         io.emit('update_user_list', []);
         return;
     }
+
+    // Erstelle ein Set aller Spieler, die gerade in einem aktiven Spiel sind
+    const playersInGame = new Set();
+    Object.values(activeGames).forEach(game => {
+        Object.values(game.players).forEach(p => playersInGame.add(p.name));
+    });
     
     const sql = `
         SELECT username, 
@@ -366,7 +372,14 @@ function broadcastUserList() {
             console.error("Fehler beim Abrufen der Online-Ränge:", err);
             return;
         }
-        io.emit('update_user_list', results);
+
+        // Füge jedem Resultat den Status "ingame" hinzu
+        const enrichedResults = results.map(user => ({
+            ...user,
+            ingame: playersInGame.has(user.username)
+        }));
+
+        io.emit('update_user_list', enrichedResults);
     });
 }
 
@@ -748,6 +761,7 @@ socket.on('forgot_password_attempt', (email) => {
 
         io.to(roomID).emit('finalScoreboard', { scores });
         delete activeGames[roomID];
+        broadcastUserList();    
     }
 
     socket.on('join_layout_room', (layoutId) => {

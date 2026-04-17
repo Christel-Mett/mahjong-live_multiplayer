@@ -344,16 +344,17 @@ function starteMatchSpeziell(peer, snapper, gewähltesLayout) {
 
 
 function broadcastUserList() {
-    // 1. Alle aktuell verbundenen User sammeln
-    const connectedUsernames = Object.values(onlineUsers).map(u => (u && typeof u === 'object') ? u.username : u);
-    
-    // 2. Alle User aus aktiven Spielen sammeln
+    // 1. Hole alle Usernamen von Sockets, die aktuell WIRKLICH verbunden sind
+    // Das ist die sicherste Quelle direkt aus dem Socket.io-Core
+    const activeSocketUsernames = Array.from(io.sockets.sockets.values())
+        .map(s => s.username)
+        .filter(name => name && typeof name === 'string');
+
+    // 2. Alle User aus aktiven Spielen sammeln (Sicherheitsnetz für Seitenwechsel)
     const playersInGame = new Set();
     Object.values(activeGames).forEach(game => {
-        // Nur wenn das Spiel-Objekt existiert und Spieler hat
         if (game && game.players) {
             Object.values(game.players).forEach(p => {
-                // Nur hinzufügen, wenn der Name existiert und kein Platzhalter ist
                 if (p && p.name && p.name !== 'Spieler') {
                     playersInGame.add(p.name);
                 }
@@ -361,16 +362,22 @@ function broadcastUserList() {
         }
     });
 
-    // 3. Vereinigung: Alle die online sind ODER gerade spielen
-    const allRelevantUsers = [...new Set([...connectedUsernames, ...Array.from(playersInGame)])]
-                             .filter(name => name && typeof name === 'string' && name.trim() !== "");
+    // 3. Vereinigung: Wer einen Socket hat ODER im Spiel ist, kommt in die Liste
+    const allRelevantUsers = [...new Set([...activeSocketUsernames, ...Array.from(playersInGame)])]
+        .filter(name => name.trim() !== "");
 
     if (allRelevantUsers.length === 0) {
         io.emit('update_user_list', []);
         return;
     }
 
-    const sql = `SELECT username, (SELECT COUNT(*) + 1 FROM users u2 WHERE u2.mp_points > u1.mp_points) AS rang FROM users u1 WHERE username IN (?) ORDER BY mp_points DESC`;
+    const sql = `
+        SELECT username, 
+               (SELECT COUNT(*) + 1 FROM users u2 WHERE u2.mp_points > u1.mp_points) AS rang
+        FROM users u1
+        WHERE username IN (?)
+        ORDER BY mp_points DESC
+    `;
 
     db.query(sql, [allRelevantUsers], (err, results) => {
         if (err) {
@@ -380,8 +387,7 @@ function broadcastUserList() {
 
         const enrichedResults = results.map(user => ({
             ...user,
-            // Ein User ist nur dann "rot", wenn er im Set ist UND 
-            // entweder noch verbunden ist oder das Spiel noch existiert
+            // Rot markieren, wenn der Name im playersInGame Set steht
             ingame: playersInGame.has(user.username)
         }));
 
@@ -852,20 +858,50 @@ socket.on('forgot_password_attempt', (email) => {
 
     socket.emit('chat_history', chatHistory);
 
-		socket.on('logout', () => {
-		    if (socket.username) {
-		        console.log(`Türsteher: ${socket.username} hat sich aktiv abgemeldet.`);
-		        
-		        const usernameLog = socket.username;
-		        loggedInUsers.delete(usernameLog);
-		        delete onlineUsers[socket.id];
-		        
-		        socket.username = null; 
-		        
-		        // Sofortige Aktualisierung ohne Verzögerung
-		        broadcastUserList();
-		    }
-		});
+socket.on('logout', () => {
+        if (socket.username) {
+            const nameToRemove = socket.username;
+            console.log(`Türsteher: ${nameToRemove} hat sich aktiv abgemeldet.`);
+            
+            loggedInUsers.delete(nameToRemove);
+            delete onlineUsers[socket.id];
+            
+            // Wichtig: Wir nullen den Namen am Socket, damit broadcastUserList 
+            // diesen Socket nicht mehr zählt
+            socket.username = null; 
+            
+            broadcastUserList();
+        }
+    });
+
+    socket.on('disconnect', () => {
+        if (socket.username) {
+            const savedUsername = socket.username;
+            const savedSocketId = socket.id;
+
+            // 2 Sekunden Puffer für Seitenwechsel (Lobby -> Spiel)
+            setTimeout(() => {
+                // Prüfen, ob der User mit einem NEUEN Socket zurückgekehrt ist
+                const stillHasActiveSocket = Array.from(io.sockets.sockets.values())
+                    .some(s => s.username === savedUsername);
+                
+                if (!stillHasActiveSocket) {
+                    // Nur wenn wirklich kein Socket mehr da ist, aus dem Login-Set löschen
+                    loggedInUsers.delete(savedUsername);
+                    console.log(`Türsteher: ${savedUsername} nach Timeout endgültig entfernt.`);
+                    
+                    if (onlineUsers[savedSocketId]) {
+                        delete onlineUsers[savedSocketId];
+                    }
+                    broadcastUserList();
+                }
+            }, 2000); 
+        }
+
+        waitingQueue = waitingQueue.filter(p => p.socket.id !== socket.id);
+        layoutQueue = layoutQueue.filter(p => p.socket.id !== socket.id);
+        broadcastLayoutStats();
+    });
 
 		socket.on('disconnect', () => {
 		    if (socket.username) {

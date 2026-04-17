@@ -855,37 +855,47 @@ socket.on('forgot_password_attempt', (email) => {
 		socket.on('logout', () => {
 		    if (socket.username) {
 		        console.log(`Türsteher: ${socket.username} hat sich aktiv abgemeldet.`);
-		        loggedInUsers.delete(socket.username);
+		        
+		        const usernameLog = socket.username;
+		        loggedInUsers.delete(usernameLog);
 		        delete onlineUsers[socket.id];
-		        socket.username = null; // Markiert den Socket als "leer"
+		        
+		        socket.username = null; 
+		        
+		        // Sofortige Aktualisierung ohne Verzögerung
 		        broadcastUserList();
 		    }
 		});
 
 		socket.on('disconnect', () => {
 		    if (socket.username) {
-		        // Wir warten kurz, bevor wir den User endgültig entfernen
-		        // um den Seitenwechsel (Lobby -> Game) abzufangen
+		        const savedUsername = socket.username;
+		        const savedSocketId = socket.id;
+		
+		        // Puffer, um kurzes Flackern beim Seitenwechsel zu verhindern
 		        setTimeout(() => {
-		            // Nur löschen, wenn der User sich nicht in der Zwischenzeit 
-		            // mit einem neuen Socket wieder angemeldet hat
-		            const isStillOnline = Object.values(onlineUsers).some(u => u.username === socket.username);
+		            // Prüfen, ob der User inzwischen mit einer NEUEN Socket-ID wieder da ist
+		            const isStillOnline = Object.values(onlineUsers).some(u => u && u.username === savedUsername);
 		            
 		            if (!isStillOnline) {
-		                if (onlineUsers[socket.id] && onlineUsers[socket.id].username === socket.username) {
-		                    loggedInUsers.delete(socket.username);
-		                    console.log(`Türsteher: ${socket.username} nach Timeout endgültig entfernt.`);
+		                // Wenn er nicht mehr online ist, aufräumen
+		                loggedInUsers.delete(savedUsername);
+		                console.log(`Türsteher: ${savedUsername} nach Timeout endgültig entfernt.`);
+		                
+		                // Sicherstellen, dass wir nicht den Socket eines neuen Logins löschen
+		                if (onlineUsers[savedSocketId]) {
+		                    delete onlineUsers[savedSocketId];
 		                }
-		                delete onlineUsers[socket.id];
 		                broadcastUserList();
 		            }
-		        }, 2000); // 2 Sekunden Puffer für den Seitenwechsel
+		        }, 2000); 
 		    }
 		
+		    // Warteschlangen werden immer sofort bereinigt
 		    waitingQueue = waitingQueue.filter(p => p.socket.id !== socket.id);
 		    layoutQueue = layoutQueue.filter(p => p.socket.id !== socket.id);
 		    broadcastLayoutStats();
-		});   
+		});
     
 });
 

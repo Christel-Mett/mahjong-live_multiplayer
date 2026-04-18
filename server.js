@@ -152,7 +152,14 @@ app.use('/shared', express.static(path.join(__dirname, 'shared')));
 // NEU: Download-Bereich für das Projekt-ZIP (öffentlich zugänglich)
 app.use('/public/downloads', express.static(path.join(__dirname, 'public/downloads')));
 // NEU: Zugriff auf das Chat-Modul im Hauptverzeichnis (NUR für eingeloggte User)
-app.get('/chat-module.js', checkAuth, (req, res) => {
+app.get('/chat-module.js', checkAuth, (req, res, next) => {
+    const clientIp = req.ip || req.connection.remoteAddress;
+    const stats = loginAttempts.get(clientIp) || { count: 0, firstAttempt: Date.now() };
+    if (stats.count >= MAX_ATTEMPTS) return res.status(429).send('Rate limit exceeded');
+    stats.count++;
+    loginAttempts.set(clientIp, stats);
+    next();
+}, (req, res) => {
     res.sendFile(path.join(__dirname, 'chat-module.js'));
 });
 

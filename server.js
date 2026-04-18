@@ -452,7 +452,19 @@ function broadcastUserList() {
 }
 
 // --- NEU: Verifizierungs-Endpunkt 
-app.get('/verify', (req, res) => {
+app.get('/verify', (req, res, next) => {
+    // Minimales Rate-Limiting für DB-Schutz (CodeQL Fix)
+    const clientIp = req.ip || req.connection.remoteAddress;
+    const stats = loginAttempts.get(clientIp) || { count: 0, firstAttempt: Date.now() };
+    
+    if (stats.count >= MAX_ATTEMPTS) {
+        return res.status(429).send('Zu viele Anfragen. Bitte versuche es später erneut.');
+    }
+    
+    stats.count++;
+    loginAttempts.set(clientIp, stats);
+    next();
+}, (req, res) => {
     const token = req.query.token;
 
     if (!token) {
@@ -471,8 +483,7 @@ app.get('/verify', (req, res) => {
             return res.send('Der Link ist ungültig oder wurde bereits genutzt.');
         }
 
-        // Erfolg: Einfaches Feedback für den Browser
-			res.send('<h1>Erfolg!</h1><p>Dein Konto wurde verifiziert. Du kannst dich jetzt einloggen. Erfolgt innerhalb der nächsten 7 Tage kein erster Login wird das Konto unwiderruflich gelöscht.</p><a href="/">Zurück zum Login</a>');
+        res.send('<h1>Erfolg!</h1><p>Dein Konto wurde verifiziert. Du kannst dich jetzt einloggen. Erfolgt innerhalb der nächsten 7 Tage kein erster Login wird das Konto unwiderruflich gelöscht.</p><a href="/">Zurück zum Login</a>');
     });
 });
 

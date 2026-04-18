@@ -169,7 +169,26 @@ app.use('/auswahl', express.static(path.join(__dirname, 'auswahl')));
 
 app.get('/lobby.html', checkAuth, (req, res) => res.sendFile(path.join(__dirname, 'lobby.html')));
 // 4. SESSION-STEUERUNG: Brücke und Logout
-app.post('/set-session', (req, res) => {
+
+// Minimales Rate-Limiting für die Session-Brücke (CodeQL Fix)
+app.post('/set-session', (req, res, next) => {
+    const clientIp = req.ip || req.connection.remoteAddress;
+    const now = Date.now();
+    const stats = loginAttempts.get(clientIp) || { count: 0, firstAttempt: now };
+
+    if (now - stats.firstAttempt > WINDOW_TIME) {
+        stats.count = 0;
+        stats.firstAttempt = now;
+    }
+
+    if (stats.count >= MAX_ATTEMPTS) {
+        return res.status(429).json({ success: false, message: 'Zu viele Anfragen.' });
+    }
+    
+    stats.count++;
+    loginAttempts.set(clientIp, stats);
+    next();
+}, (req, res) => {
     const { username } = req.body;
     if (username && loggedInUsers.has(username)) {
         req.session.username = username;

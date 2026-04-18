@@ -113,16 +113,31 @@ app.use(express.json());
 
 // --- NEU: Gezielte Zugriffskontrolle & Sicherheits-Middleware ---
 
-// 1. GLOBALER DATEI-SCHUTZ: Verhindert den Direktaufruf von .js Dateien im Browser
+// 1. GLOBALER DATEI-SCHUTZ: Verhindert den Direktaufruf von .js Dateien
 app.use((req, res, next) => {
-    // Wenn eine .js Datei aufgerufen wird (außer captcha und socket.io)
-    if (req.path.endsWith('.js') && !req.path.includes('socket.io') && req.path !== '/captcha.js') {
-        // Wenn keine Session da ist -> Zugriff verweigert
-        if (!req.session || !req.session.username) {
-            return res.status(403).send('Zugriff verweigert.');
-        }
+    // Pfad bereinigen (entfernt Query-Parameter wie ?v=123)
+    const cleanPath = req.path.split('?')[0];
+    const ext = path.extname(cleanPath).toLowerCase();
+
+    // Wenn es keine JavaScript-Datei ist, direkt weiter
+    if (ext !== '.js') {
+        return next();
     }
-    next();
+
+    // EXAKTE Prüfung der Ausnahmen (kein .includes oder .endsWith)
+    const isSocketIo = cleanPath.startsWith('/socket.io/');
+    const isCaptcha = cleanPath === '/captcha.js';
+
+    if (isSocketIo || isCaptcha) {
+        return next();
+    }
+
+    // Schutz für alle anderen .js Dateien
+    if (req.session && req.session.username) {
+        return next();
+    }
+
+    res.status(403).send('Zugriff verweigert.');
 });
 
 // 2. ÖFFENTLICHER BEREICH: Jeder darf diese Dateien sehen

@@ -452,37 +452,37 @@ function broadcastUserList() {
 }
 
 // --- NEU: Verifizierungs-Endpunkt 
-app.get('/verify', (req, res, next) => {
-    // Minimales Rate-Limiting für DB-Schutz (CodeQL Fix)
+app.get('/verify', (req, res) => {
+    // 1. Sofortige Prüfung des Rate-Limits (CodeQL Schutz)
     const clientIp = req.ip || req.connection.remoteAddress;
-    const stats = loginAttempts.get(clientIp) || { count: 0, firstAttempt: Date.now() };
-    
+    const now = Date.now();
+    const stats = loginAttempts.get(clientIp) || { count: 0, firstAttempt: now };
+
+    if (now - stats.firstAttempt > WINDOW_TIME) {
+        stats.count = 0;
+        stats.firstAttempt = now;
+    }
+
     if (stats.count >= MAX_ATTEMPTS) {
         return res.status(429).send('Zu viele Anfragen. Bitte versuche es später erneut.');
     }
     
     stats.count++;
     loginAttempts.set(clientIp, stats);
-    next();
-}, (req, res) => {
+
+    // 2. Eigentliche Logik
     const token = req.query.token;
+    if (!token) return res.send('Ungültiger Verifizierungs-Link.');
 
-    if (!token) {
-        return res.send('Ungültiger Verifizierungs-Link.');
-    }
-
-    // Prüft den Token und schaltet den User frei
     const sql = "UPDATE users SET is_verified = 1, token = NULL WHERE token = ?";
     db.query(sql, [token], (err, result) => {
         if (err) {
             console.error("Verifizierungsfehler:", err);
             return res.send('Ein Fehler ist aufgetreten.');
         }
-
         if (result.affectedRows === 0) {
             return res.send('Der Link ist ungültig oder wurde bereits genutzt.');
         }
-
         res.send('<h1>Erfolg!</h1><p>Dein Konto wurde verifiziert. Du kannst dich jetzt einloggen. Erfolgt innerhalb der nächsten 7 Tage kein erster Login wird das Konto unwiderruflich gelöscht.</p><a href="/">Zurück zum Login</a>');
     });
 });

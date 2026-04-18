@@ -14,6 +14,10 @@ const captcha = require('./captcha');
 const session = require('express-session');*/
 const helmet = require('helmet'); // Helmet laden
 const app = express();
+// Speicher für Login-Versuche pro IP (Rate-Limiting)
+const loginAttempts = new Map();
+const MAX_ATTEMPTS = 100; // Limit: 100 Versuche pro IP
+const WINDOW_TIME = 15 * 60 * 1000; // Zeitfenster: 15 Minuten
 
 // Sicherheits-Header konfigurieren
 app.use(helmet({
@@ -492,8 +496,35 @@ socket.on('reconnect_user', (data) => {
         }); // <-- Hier fehlte vermutlich die schließende Klammer ) oder das Semikolon
     });
         
-    socket.on('login_attempt', (data) => {
+socket.on('login_attempt', (data) => {
         const { username, password } = data;
+        const clientIp = socket.handshake.address;
+        const now = Date.now();
+
+        // 1. IP-Eintrag in der Map erstellen oder abrufen
+        if (!loginAttempts.has(clientIp)) {
+            loginAttempts.set(clientIp, { count: 0, firstAttempt: now });
+        }
+
+        const stats = loginAttempts.get(clientIp);
+
+        // 2. Zeitfenster-Reset: Wenn 15 Min rum sind, Zähler auf 0
+        if (now - stats.firstAttempt > WINDOW_TIME) {
+            stats.count = 0;
+            stats.firstAttempt = now;
+        }
+
+        // 3. Sperre prüfen
+        if (stats.count >= MAX_ATTEMPTS) {
+            console.log(`Rate-Limit: IP ${clientIp} blockiert (Versuche: ${stats.count})`);
+            return socket.emit('login_response', { 
+                success: false, 
+                message: 'Zu viele Anmeldeversuche. Bitte warte 15 Minuten.' 
+            });
+        }
+
+        // 4. Versuch registrieren
+        stats.count++;
         
         db.query('SELECT * FROM users WHERE username = ?', [username], async (err, results) => {
             if (err || results.length === 0) {

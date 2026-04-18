@@ -188,7 +188,17 @@ let chatHistory = [];
 const MAX_CHAT_MSGS = 50;
 
 function sanitize(text) {
-    return text.replace(/<[^>]*>?/gm, ''); 
+    if (typeof text !== 'string') return '';
+    const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#x27;',
+        "/": '&#x2F;'
+    };
+    const reg = /[&<>"'/]/ig;
+    return text.replace(reg, (match) => (map[match]));
 }
 
 const meineLayouts = [

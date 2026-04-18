@@ -257,10 +257,10 @@
 			
 			        // Logik für die Farbhierarchie:
 			        if (userData.ingame) {
-			            // Spieler ist im Spiel -> Rot
-			            div.style.color = '#e74c3c'; 
+			            // Spieler ist im Spiel -> gelb
+			            div.style.color = '#ede027'; 
 			            div.textContent += " (im Spiel)";
-			        } else if (userData.username === meinName) {
+			        } else if (userData.username.toLowerCase() === meinName.toLowerCase()) {
 			            // Ich selbst (und nicht im Spiel) -> Grün
 			            div.style.color = '#2ecc71';
 			            div.style.fontWeight = 'bold';

@@ -513,7 +513,7 @@ socket.on('reconnect_user', (data) => {
         
             const match = await bcrypt.compare(password, user.password);
         
-            if (match) {
+           if (match) {
                 // --- NEU: Zeitstempel aktualisieren & Warn-Status zurücksetzen ---
                 const updateSql = "UPDATE users SET last_login = NOW(), deletion_warning_sent = NULL WHERE id = ?";
                 db.query(updateSql, [user.id], (updErr) => {
@@ -521,38 +521,41 @@ socket.on('reconnect_user', (data) => {
                 });
                 // --- ENDE NEU ---
 
+                // KORREKTUR: Original-Schreibweise aus DB nutzen
+                const dbUsername = user.username;
+
                 // 1. TÜRSTEHER-CHECK:
-                if (loggedInUsers.has(username)) {
+                if (loggedInUsers.has(dbUsername)) {
                     const isReallyOnline = Object.values(onlineUsers).some(u => 
-                        (typeof u === 'object' ? u.username : u) === username
+                        (typeof u === 'object' ? u.username : u) === dbUsername
                     );
                     
                     if (isReallyOnline) {
-                        console.log(`Türsteher: Blockiere Doppelanmeldung für ${username}`);
+                        console.log(`Türsteher: Blockiere Doppelanmeldung für ${dbUsername}`);
                         socket.emit('login_response', { 
                             success: false, 
                             message: 'Dieser Benutzer ist bereits an einem anderen Ort eingeloggt.' 
                         });
                         return; 
                     } else {
-                        loggedInUsers.delete(username);
+                        loggedInUsers.delete(dbUsername);
                     }
                 }
 
-                // 2. JETZT EINTRAGEN
-                socket.username = username; 
-                loggedInUsers.add(username);
+                // 2. JETZT EINTRAGEN (mit dbUsername)
+                socket.username = dbUsername; 
+                loggedInUsers.add(dbUsername);
                 
                 onlineUsers[socket.id] = { 
-                    username: username, 
+                    username: dbUsername, 
                     mp_points: user.mp_points 
                 };
 
-                console.log(`Türsteher: ${username} (Socket: ${socket.id}) zur Gästeliste hinzugefügt.`);
+                console.log(`Türsteher: ${dbUsername} (Socket: ${socket.id}) zur Gästeliste hinzugefügt.`);
 
                 socket.emit('login_response', { 
                     success: true, 
-                    username: username, 
+                    username: dbUsername, 
                     points: user.mp_points 
                 });
                 
@@ -567,7 +570,7 @@ socket.on('register_attempt', async (data) => {
     const { username, password, email, captchaToken } = data;
    
     try {
-        // 2. Direkt hier den Bot-Check durchführen
+        // 1. Direkt hier den Bot-Check durchführen
         const isHuman = await captcha.verifyCaptcha(captchaToken);
         if (!isHuman) {
             return socket.emit('register_response', { 
@@ -578,37 +581,55 @@ socket.on('register_attempt', async (data) => {
         const hashedPassword = await bcrypt.hash(password, saltRounds);
         const token = crypto.randomBytes(32).toString('hex'); // NEU: Token generieren
 
-        // Anpassung: token und is_verified (0) werden mitgespeichert
+		  // 2. VORAB-PRÜFUNG: Existiert der Name oder die Mail schon (Case-Insensitive)?
         db.query(
-            'INSERT INTO users (username, password, email, mp_points, is_verified, token) VALUES (?, ?, ?, 0, 0, ?)',
-            [username, hashedPassword, email, token],
-            (err) => {
+            'SELECT id FROM users WHERE LOWER(username) = LOWER(?) OR email = ?',
+            [username, email],
+            (err, results) => {
                 if (err) {
-                    let userMessage = 'Registrierung fehlgeschlagen.';
-                    if (err.code === 'ER_DUP_ENTRY') {
-                        if (err.message.includes('email')) {
-                            userMessage = 'Diese E-Mail-Adresse wird bereits verwendet.';
-                        } else if (err.message.includes('username')) {
-                            userMessage = 'Dieser Benutzername ist bereits vergeben.';
+                    console.error("DB Fehler bei Registrierungs-Check:", err);
+                    return socket.emit('register_response', { success: false, message: 'Datenbankfehler.' });
+                }
+                
+                if (results.length > 0) {
+                    return socket.emit('register_response', { 
+                        success: false, 
+                        message: 'Benutzername oder E-Mail bereits vergeben.' 
+                    });
+                }
+
+                // 3. ERST JETZT: Tatsächliches Einfügen (Dein alter Code, nun hier drin)
+                db.query(
+                    'INSERT INTO users (username, password, email, mp_points, is_verified, token) VALUES (?, ?, ?, 0, 0, ?)',
+                    [username, hashedPassword, email, token],
+                    (err) => {
+                        if (err) {
+                            let userMessage = 'Registrierung fehlgeschlagen.';
+                            if (err.code === 'ER_DUP_ENTRY') {
+                                if (err.message.includes('email')) {
+                                    userMessage = 'Diese E-Mail-Adresse wird bereits verwendet.';
+                                } else if (err.message.includes('username')) {
+                                    userMessage = 'Dieser Benutzername ist bereits vergeben.';
+                                }
+                            }
+                            socket.emit('register_response', { success: false, message: userMessage });
+                        } else {
+                            const mailOptions = {
+                                from: `"Mahjong-Treff" <${process.env.MAIL_USER}>`,
+                                to: email,
+                                subject: 'Bestätige deine Registrierung',
+                                text: `Hallo ${username}, bitte bestätige dein Konto unter: ${process.env.APP_URL}/verify?token=${token}`,
+                                html: `<p>Hallo ${username},</p><p>bitte bestätige dein Konto durch Klick auf den folgenden Link:</p><a href="${process.env.APP_URL}/verify?token=${token}">Konto verifizieren</a>`
+                            };
+
+                            transporter.sendMail(mailOptions, (error, info) => {
+                                if (error) console.error("Mail-Fehler:", error);
+                            });
+
+                            socket.emit('register_response', { success: true });
                         }
                     }
-                    socket.emit('register_response', { success: false, message: userMessage });
-                } else {
-                    // NEU: E-Mail Versand triggern
-                    const mailOptions = {
-                        from: `"Mahjong-Treff" <${process.env.MAIL_USER}>`,
-                        to: email,
-                        subject: 'Bestätige deine Registrierung',
-                        text: `Hallo ${username}, bitte bestätige dein Konto unter: https://mahjong-treff.de/verify?token=${token}`,
-                        html: `<p>Hallo ${username},</p><p>bitte bestätige dein Konto durch Klick auf den folgenden Link:</p><a href="${process.env.APP_URL}/verify?token=${token}">Konto verifizieren</a>`
-                    };
-
-                    transporter.sendMail(mailOptions, (error, info) => {
-                        if (error) console.error("Mail-Fehler:", error);
-                    });
-
-                    socket.emit('register_response', { success: true });
-                }
+                );
             }
         );
     } catch (e) { 

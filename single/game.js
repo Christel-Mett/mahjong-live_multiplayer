@@ -551,7 +551,8 @@ function zeigeBestenliste() {
     const body = document.getElementById('highscoreBodyPopup');
     const saveBtn = document.getElementById('saveHighscoreBtn');
     if (!body) return;
-    body.innerHTML = "";
+    
+    body.innerHTML = ""; // Das Tabellen-Innere leeren
     
     let displayScores = [...scores];
     let highlightIndex = -1;
@@ -567,27 +568,42 @@ function zeigeBestenliste() {
     }
 
     for (let i = 0; i < 10; i++) {
-        const row = body.insertRow();
+        const row = body.insertRow(); // Erzeugt ein <tr>
         const platz = i + 1;
-        
+        const daten = displayScores[i];
+
+        // Zelle 1: Platzierung
+        const cellPlatz = row.insertCell(0);
+        cellPlatz.textContent = platz + ".";
+        if (!daten) cellPlatz.style.color = "#666";
+
+        // Zelle 2: Name (oder Input bei neuem Highscore)
+        const cellName = row.insertCell(1);
         if (i === highlightIndex && neuerHighscoreEintrag) {
-            row.innerHTML = `
-                <td>${platz}.</td>
-                <td><input type="text" id="newNameInput" class="highscore-input" 
-                    value="${neuerHighscoreEintrag.name}" placeholder="Dein Name..." 
-                    onkeydown="if(event.key==='Enter') finalisiereHighscoreSpeichern()"></td>
-                <td>${displayScores[i].zeit}</td>
-                <td>${displayScores[i].punkte}</td>
-            `;
+            const input = document.createElement('input');
+            input.type = "text";
+            input.id = "newNameInput";
+            input.className = "highscore-input";
+            input.value = neuerHighscoreEintrag.name;
+            input.placeholder = "Dein Name...";
+            input.onkeydown = (event) => { if(event.key === 'Enter') finalisiereHighscoreSpeichern(); };
+            cellName.appendChild(input);
+            
             setTimeout(() => {
-                const input = document.getElementById('newNameInput');
-                if(input) { input.focus(); input.select(); }
+                input.focus();
+                input.select();
             }, 100);
-        } else if (displayScores[i]) {
-            row.innerHTML = `<td>${platz}.</td><td>${displayScores[i].name}</td><td>${displayScores[i].zeit}</td><td>${displayScores[i].punkte}</td>`;
         } else {
-            row.innerHTML = `<td style="color: #666;">${platz}.</td><td>--</td><td>--</td><td>--</td>`;
+            cellName.textContent = daten ? daten.name : "--";
         }
+
+        // Zelle 3: Zeit
+        const cellZeit = row.insertCell(2);
+        cellZeit.textContent = daten ? daten.zeit : "--";
+
+        // Zelle 4: Punkte
+        const cellPunkte = row.insertCell(3);
+        cellPunkte.textContent = daten ? daten.punkte : "--";
     }
 }
 

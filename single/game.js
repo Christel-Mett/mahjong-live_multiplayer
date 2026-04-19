@@ -571,7 +571,7 @@ function zeigeBestenliste() {
         const platz = i + 1;
         
         if (i === highlightIndex && neuerHighscoreEintrag) {
-            row.textContent = `
+            row.innerHTML = `
                 <td>${platz}.</td>
                 <td><input type="text" id="newNameInput" class="highscore-input" 
                     value="${neuerHighscoreEintrag.name}" placeholder="Dein Name..." 
@@ -584,7 +584,7 @@ function zeigeBestenliste() {
                 if(input) { input.focus(); input.select(); }
             }, 100);
         } else if (displayScores[i]) {
-            row.textContent = `<td>${platz}.</td><td>${displayScores[i].name}</td><td>${displayScores[i].zeit}</td><td>${displayScores[i].punkte}</td>`;
+            row.innerHTML = `<td>${platz}.</td><td>${displayScores[i].name}</td><td>${displayScores[i].zeit}</td><td>${displayScores[i].punkte}</td>`;
         } else {
             row.innerHTML = `<td style="color: #666;">${platz}.</td><td>--</td><td>--</td><td>--</td>`;
         }

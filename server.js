@@ -296,6 +296,15 @@ setInterval(() => {
         for (let j = i + 1; j < waitingQueue.length; j++) {
             const p1 = waitingQueue[i];
             const p2 = waitingQueue[j];
+            // --- ÄNDERUNG ANFANG: Selbst-Match verhindern ---
+				// --- KORREKTUR ANFANG ---
+				if (p1.username && p2.username && p1.username === p2.username) {
+				    waitingQueue.splice(i, 1);
+				    i--; // Index korrigieren, da wir ein Element gelöscht haben
+				    break; // Innere Schleife für p1 abbrechen
+				}
+				// --- KORREKTUR ENDE ---
+            // --- ÄNDERUNG ENDE ---
             const diff = Math.abs(p1.rank - p2.rank);
             const wartedauerP1 = jetzt - p1.startTime;
             const wartedauerP2 = jetzt - p2.startTime;
@@ -323,6 +332,15 @@ setInterval(() => {
         for (let j = 0; j < layoutQueue.length; j++) {
             if (i === j) continue;
             const p2 = layoutQueue[j];
+            // --- ÄNDERUNG ANFANG: Selbst-Match in layoutQueue verhindern ---
+				// --- KORREKTUR ANFANG ---
+				if (p1.username && p2.username && p1.username === p2.username) {
+				    layoutQueue.splice(i, 1);
+				    i--;
+				    break; 
+				}
+				// --- KORREKTUR ENDE ---
+            // --- ÄNDERUNG ENDE ---
             const diff = Math.abs(p1.rank - p2.rank);
             const maxWartezeit = Math.max(dauerP1, jetzt - p2.startTime);
 
@@ -358,6 +376,13 @@ setInterval(() => {
             if (targetIdx === -1) targetIdx = 0;
 
             const p2 = waitingQueue[targetIdx];
+            // --- ÄNDERUNG ANFANG: Selbst-Match zwischen layoutQueue und waitingQueue verhindern ---
+            if (p1.username === p2.username) {
+                // Falls der User in beiden Schlangen gelandet ist, bereinigen wir hier die layoutQueue
+                layoutQueue.splice(i, 1);
+                return;
+            }
+            // --- ÄNDERUNG ENDE ---
             layoutQueue.splice(i, 1);
             waitingQueue.splice(targetIdx, 1);
             
@@ -891,6 +916,24 @@ socket.on('forgot_password_attempt', (email) => {
         broadcastUserList();    
     }
 
+	function bereinigeLeichenSpiele(username) {
+	    for (const roomID in activeGames) {
+	        const room = activeGames[roomID];
+	        if (!room || !room.players) continue;
+	
+	        // Prüfen, ob der betroffene User Teil dieses Raums ist
+	        const isParticipant = Object.values(room.players).some(p => p.name === username);
+	        
+	        if (isParticipant) {
+	            console.log(`Leichen-Check: Spiel ${roomID} abgebrochen, da ${username} weg ist.`);
+	            // Dem verbleibenden Partner mitteilen, dass das Spiel vorbei ist
+	            io.to(roomID).emit('opponentLeft'); 
+	            // Den Raum aus dem Speicher löschen
+	            delete activeGames[roomID];
+	        }
+	    }
+	}
+
     socket.on('join_layout_room', (layoutId) => {
         socket.join(`layout_${layoutId}`);
         broadcastLayoutUserList(layoutId);
@@ -993,7 +1036,7 @@ socket.on('logout', () => {
         if (socket.username) {
             const savedUsername = socket.username;
             const savedSocketId = socket.id;
-
+            bereinigeLeichenSpiele(savedUsername);
             // 2 Sekunden Puffer für Seitenwechsel (Lobby -> Spiel)
             setTimeout(() => {
                 // Prüfen, ob der User mit einem NEUEN Socket zurückgekehrt ist
@@ -1004,7 +1047,6 @@ socket.on('logout', () => {
                     // Nur wenn wirklich kein Socket mehr da ist, aus dem Login-Set löschen
                     loggedInUsers.delete(savedUsername);
                     console.log(`Türsteher: ${savedUsername} nach Timeout endgültig entfernt.`);
-                    
                     if (onlineUsers[savedSocketId]) {
                         delete onlineUsers[savedSocketId];
                     }
@@ -1022,7 +1064,7 @@ socket.on('logout', () => {
 		    if (socket.username) {
 		        const savedUsername = socket.username;
 		        const savedSocketId = socket.id;
-		
+		        bereinigeLeichenSpiele(savedUsername);
 		        // Puffer, um kurzes Flackern beim Seitenwechsel zu verhindern
 		        setTimeout(() => {
 		            // Prüfen, ob der User inzwischen mit einer NEUEN Socket-ID wieder da ist
@@ -1032,7 +1074,7 @@ socket.on('logout', () => {
 		                // Wenn er nicht mehr online ist, aufräumen
 		                loggedInUsers.delete(savedUsername);
 		                console.log(`Türsteher: ${savedUsername} nach Timeout endgültig entfernt.`);
-		                
+		                bereinigeLeichenSpiele(savedUsername);
 		                // Sicherstellen, dass wir nicht den Socket eines neuen Logins löschen
 		                if (onlineUsers[savedSocketId]) {
 		                    delete onlineUsers[savedSocketId];

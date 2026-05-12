@@ -23,9 +23,9 @@ window.sendMessage = function() {
 
 // --- Emoji-Konfiguration ---
 const emojiList = [
-    '😊', '😂', '😉', '😍', '🤔', '😎', '😮', '😢', '🤮️', '👍', '👎', '🙏️', 
+    '😊', '😂', '😉', '😍', '🤔', '😎', '😮', '😢', '🤮️', '👍', '👎', '🤘️', '💪️', '🙏️', 
     '🔥', '✨', '🎉', '👋', '❤️', '🍀', '🎲', '💩️', '🎮', '⌛',
-    '🀄', '🀅', '🀆', '🀀', '🀁', '🀂', '🀃' // Mahjong-spezifische Emojis
+    '🀄'// Mahjong-spezifische Emojis
 ];
 
 window.scrollEmojis = function(distance) {

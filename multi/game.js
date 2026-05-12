@@ -169,16 +169,16 @@ function getSymbolGruppe(symbolName) {
 }
 
 function istSlotFreiZumBefüllen(slot, alleSlots) {
+    let blockL = false, blockR = false;  // ← aus der Schleife raus
     for (let o of alleSlots) {
         if (o === slot || o.belegt) continue;
         if (o.layer === slot.layer + 1 && Math.abs(o.row - slot.row) < 1.9 && Math.abs(o.col - slot.col) < 1.9) return false;
         if (o.layer === slot.layer && Math.abs(o.row - slot.row) < 1.9) {
-            let blockR = (o.col - slot.col >= 1.7 && o.col - slot.col <= 2.3);
-            let blockL = (o.col - slot.col <= -1.7 && o.col - slot.col >= -2.3);
-            if (blockR && blockL) return false; 
+            if (o.col - slot.col >= 1.7 && o.col - slot.col <= 2.3) blockR = true;
+            if (o.col - slot.col <= -1.7 && o.col - slot.col >= -2.3) blockL = true;
         }
     }
-    return true; 
+    return !(blockL && blockR);  // ← am Ende prüfen, nicht im Loop
 }
 
 function istSteinFrei(data, group) {

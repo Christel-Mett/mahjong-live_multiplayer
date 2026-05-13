@@ -396,6 +396,7 @@ window.addEventListener('mousedown', (e) => {
             const g1 = getSymbolGruppe(s1), g2 = getSymbolGruppe(s2);
 
             if (s1 === s2 || (g1 === g2 && g1 !== null && g1.startsWith('GRUPPE'))) {
+					 sounds.swoosh.currentTime = 0;                   
                 sounds.swoosh.play();
 
                 if (letztesSymbolMatch === (g1 || s1)) {

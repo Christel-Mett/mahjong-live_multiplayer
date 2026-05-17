@@ -1,5 +1,15 @@
 # Mahjong-Live Multiplayer
 
+> [!CAUTION]
+> ## ⚠️ Dieses Repository ist archiviert
+>
+> Dieses Projekt wird nicht mehr weiterentwickelt. Es wurde durch eine vollständig neu aufgebaute,
+> modular strukturierte Version ersetzt, die besser wartbar und erweiterbar ist.
+>
+> 👉 **Nachfolgeprojekt:** [mahjong-live2_multiplayer](https://github.com/Christel-Mett/mahjong-live2_multiplayer)
+>
+> Der Code bleibt aus historischen Gründen öffentlich zugänglich.
+
 Online-Solitair-Mahjong Spiel (Node.js), Multiplayer.  
 **Live-Demo:** [mahjong-treff.de](https://mahjong-treff.de)
 **Hauptsprache:** Deutsch (English via auto-translation).

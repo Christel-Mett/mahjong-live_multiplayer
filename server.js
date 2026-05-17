@@ -369,26 +369,29 @@ setInterval(() => {
             }
         }
 
-        // --- PHASE 3 (Extern): Suche in waitingQueue, wenn p1 > 60s wartet ---
-        if (dauerP1 > 60000 && waitingQueue.length > 0) {
-            // Option A: Erst passender Rang, sonst der Erste in der Schlange
-            let targetIdx = waitingQueue.findIndex(wp => Math.abs(p1.rank - wp.rank) <= MAX_RANK_DIFF);
-            if (targetIdx === -1) targetIdx = 0;
-
-            const p2 = waitingQueue[targetIdx];
-            // --- ÄNDERUNG ANFANG: Selbst-Match zwischen layoutQueue und waitingQueue verhindern ---
-            if (p1.username === p2.username) {
-                // Falls der User in beiden Schlangen gelandet ist, bereinigen wir hier die layoutQueue
-                layoutQueue.splice(i, 1);
-                return;
-            }
-            // --- ÄNDERUNG ENDE ---
-            layoutQueue.splice(i, 1);
-            waitingQueue.splice(targetIdx, 1);
-            
-            starteMatchSpeziell(p1, p2, p1.layoutId);
-            return;
-        }
+		// --- PHASE 3 (Extern): Suche in waitingQueue, wenn p1 > 60s wartet ---
+		if (dauerP1 > 60000 && waitingQueue.length > 0) {
+		    // Option A: Erst passender Rang, sonst der Erste in der Schlange
+		    // Korrektur: Zugriff auf .name statt .username, da in join_queue 'name' gesetzt wird
+		    let targetIdx = waitingQueue.findIndex(wp => Math.abs(p1.rank - wp.rank) <= MAX_RANK_DIFF);
+		    if (targetIdx === -1) targetIdx = 0;
+		
+		    const p2 = waitingQueue[targetIdx];
+		    
+		    // Prüfung auf Selbst-Match
+		    if (p1.name === p2.name) {
+		        // Falls der User in beiden Schlangen ist: aus layoutQueue entfernen und weitermachen
+		        layoutQueue.splice(i, 1);
+		        return; 
+		    }
+		    
+		    // Match durchführen
+		    layoutQueue.splice(i, 1);
+		    waitingQueue.splice(targetIdx, 1);
+		    
+		    starteMatchSpeziell(p1, p2, p1.layoutId);
+		    return;
+		}
     }
 }, 1000);
 
